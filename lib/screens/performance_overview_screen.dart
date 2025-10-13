@@ -104,49 +104,47 @@ class _PerformanceOverviewScreenState extends State<PerformanceOverviewScreen> {
       ),
     );
 
+    // Small delay to ensure dialog is fully shown
+    await Future.delayed(const Duration(milliseconds: 100));
+
     try {
       final importedCount = await provider.importFeedbackFromFiles();
       
       if (!mounted) return;
+      
+      // Close dialog BEFORE calling _loadData which triggers setState
+      Navigator.of(context).pop();
+      
+      // Small delay to ensure dialog close animation completes
+      await Future.delayed(const Duration(milliseconds: 100));
 
-      // Reload metrics data
+      // Now reload metrics data - this is safe because dialog is already closed
       await _loadData();
 
-      // Use addPostFrameCallback to close dialog after rebuild completes
+      // Show success message
       if (mounted) {
-        SchedulerBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            Navigator.of(context).pop();
-            
-            // Show success message
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(importedCount > 0
-                    ? '✅ Imported $importedCount feedback submission${importedCount == 1 ? '' : 's'}'
-                    : 'No new feedback to import'),
-                backgroundColor: importedCount > 0 ? Colors.green : Colors.orange,
-                duration: const Duration(seconds: 3),
-              ),
-            );
-          }
-        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(importedCount > 0
+                ? '✅ Imported $importedCount feedback submission${importedCount == 1 ? '' : 's'}'
+                : 'No new feedback to import'),
+            backgroundColor: importedCount > 0 ? Colors.green : Colors.orange,
+            duration: const Duration(seconds: 3),
+          ),
+        );
       }
     } catch (e) {
-      // Use addPostFrameCallback for error case too
+      // Close dialog on error
+      if (mounted) Navigator.of(context).pop();
+      
       if (mounted) {
-        SchedulerBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            Navigator.of(context).pop();
-            
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Error syncing feedback: $e'),
-                backgroundColor: Colors.red,
-                duration: const Duration(seconds: 4),
-              ),
-            );
-          }
-        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error syncing feedback: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
       }
     }
   }
