@@ -321,61 +321,74 @@ class _RepairTicketsScreenState extends State<RepairTicketsScreen> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Row(
+                    Wrap(
+                      spacing: 16,
+                      runSpacing: 4,
                       children: [
-                        if (ticket.createdBy != null) ...[
-                          Icon(
-                            Icons.person_outline,
-                            size: 14,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        if (ticket.createdBy != null)
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.person_outline,
+                                size: 14,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                _getCreatorName(ticket.createdBy),
+                                style: TextStyle(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            _getCreatorName(ticket.createdBy),
-                            style: TextStyle(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurfaceVariant,
-                              fontSize: 12,
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.schedule,
+                              size: 14,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
                             ),
-                          ),
-                          const SizedBox(width: 16),
-                        ],
-                        Icon(
-                          Icons.schedule,
-                          size: 14,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          DateFormat('MMM dd, yyyy').format(ticket.createdAt),
-                          style: TextStyle(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurfaceVariant,
-                            fontSize: 12,
-                          ),
-                        ),
-                        if (ticket.estimatedCost != null) ...[
-                          const SizedBox(width: 16),
-                          Icon(
-                            Icons.attach_money,
-                            size: 14,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurfaceVariant,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '\$${ticket.estimatedCost!.toStringAsFixed(2)}',
-                            style: TextStyle(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurfaceVariant,
-                              fontSize: 12,
+                            const SizedBox(width: 4),
+                            Text(
+                              DateFormat('MMM dd, yyyy').format(ticket.createdAt),
+                              style: TextStyle(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                                fontSize: 12,
+                              ),
                             ),
+                          ],
+                        ),
+                        if (ticket.estimatedCost != null)
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.attach_money,
+                                size: 14,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '\$${ticket.estimatedCost!.toStringAsFixed(2)}',
+                                style: TextStyle(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
                       ],
                     ),
                   ],
