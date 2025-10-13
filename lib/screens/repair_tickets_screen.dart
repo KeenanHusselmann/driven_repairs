@@ -1197,7 +1197,7 @@ class _TicketFormDialogState extends State<TicketFormDialog> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 DropdownButtonFormField<DeviceType>(
-                  value: selectedType,
+                  initialValue: selectedType,
                   decoration: const InputDecoration(
                     labelText: 'Device Type*',
                     border: OutlineInputBorder(),
