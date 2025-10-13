@@ -1008,6 +1008,52 @@ class _TicketFormDialogState extends State<TicketFormDialog> {
                   },
                 ),
                 const SizedBox(height: 16),
+                // Technician assignment dropdown (Admin only)
+                Consumer2<AuthProvider, TechnicianProvider>(
+                  builder: (context, authProvider, technicianProvider, _) {
+                    final isAdmin = authProvider.currentUser?.role == UserRole.admin;
+                    
+                    if (!isAdmin) {
+                      return const SizedBox.shrink(); // Don't show for non-admin users
+                    }
+                    
+                    final technicians = technicianProvider.technicians
+                        .where((t) => t.status == TechnicianStatus.active)
+                        .toList();
+                    
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        DropdownButtonFormField<String>(
+                          value: _selectedTechnicianId,
+                          decoration: const InputDecoration(
+                            labelText: 'Assign to Technician',
+                            border: OutlineInputBorder(),
+                            helperText: 'Optional - Leave empty to auto-assign',
+                          ),
+                          items: [
+                            const DropdownMenuItem<String>(
+                              value: null,
+                              child: Text('Auto-assign (Current User)'),
+                            ),
+                            ...technicians.map((technician) {
+                              return DropdownMenuItem(
+                                value: technician.id,
+                                child: Text('${technician.fullName} - ${technician.status.displayName}'),
+                              );
+                            }),
+                          ],
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedTechnicianId = value;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                    );
+                  },
+                ),
                 Row(
                   children: [
                     Expanded(
