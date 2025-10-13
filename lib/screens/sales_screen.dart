@@ -579,7 +579,7 @@ class _SalesScreenState extends State<SalesScreen>
                   style: const TextStyle(fontWeight: FontWeight.w500),
                 ),
                 Text(
-                  'Ticket #${ticket.id.substring(0, 8)}',
+                  'Ticket #${ticket.id}',
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontSize: 12,
