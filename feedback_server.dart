@@ -275,31 +275,29 @@ Future<void> _sendEmailNotification(
   Map<String, dynamic> data,
 ) async {
   try {
-    final subject = Uri.encodeComponent('New Customer Feedback Received');
-    final body = Uri.encodeComponent('''
-New Customer Feedback Received!
+    final customerName = data['customerName'] ?? 'Unknown Customer';
+    final customerEmail = data['email'] ?? '';
+    final ticketTitle = data['ticketTitle'] ?? '';
+    
+    final subject = Uri.encodeComponent('New Customer Feedback Received - $customerName');
+    final body = Uri.encodeComponent('''New Customer Feedback Received!
 
-Ticket ID: ${rating.ticketId}
-Customer ID: ${rating.customerId}
+Customer: $customerName${customerEmail.isNotEmpty ? ' ($customerEmail)' : ''}
+Ticket: ${rating.ticketId.substring(0, 8)}${ticketTitle.isNotEmpty ? ' - $ticketTitle' : ''}
 
-Ratings:
-━━━━━━━━━━━━━━━━━━━━━━
-• Satisfaction: ${rating.satisfactionRating}/5 ${'⭐' * rating.satisfactionRating}
-• Timeliness: ${rating.timelinessRating}/5 ${'⭐' * rating.timelinessRating}
-• Communication: ${rating.communicationRating}/5 ${'⭐' * rating.communicationRating}
-• Quality: ${rating.qualityRating}/5 ${'⭐' * rating.qualityRating}
+Ratings Summary:
+Satisfaction: ${rating.satisfactionRating}/5 ${'⭐' * rating.satisfactionRating}
+Timeliness: ${rating.timelinessRating}/5 ${'⭐' * rating.timelinessRating}
+Communication: ${rating.communicationRating}/5 ${'⭐' * rating.communicationRating}
+Quality: ${rating.qualityRating}/5 ${'⭐' * rating.qualityRating}
 
-Average Rating: ${rating.averageRating.toStringAsFixed(1)}/5.0
-
-Would Recommend: ${rating.wouldRecommend ? '✅ Yes' : '❌ No'}
+Average: ${rating.averageRating.toStringAsFixed(1)}/5.0
+Would Recommend: ${rating.wouldRecommend ? 'YES' : 'NO'}
 
 Comments:
-${(rating.feedback?.isNotEmpty ?? false) ? rating.feedback : 'No comments provided'}
+${(rating.feedback?.isNotEmpty ?? false) ? rating.feedback : 'No comments'}
 
-━━━━━━━━━━━━━━━━━━━━━━
 Submitted: ${DateTime.now().toString().substring(0, 19)}
-
-This feedback has been logged successfully.
 ''');
 
     final emailUrl = 'mailto:keenan.husselmann39@gmail.com'
