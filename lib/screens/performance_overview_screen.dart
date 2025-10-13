@@ -77,77 +77,6 @@ class _PerformanceOverviewScreenState extends State<PerformanceOverviewScreen> {
     }
   }
 
-  Future<void> _syncFeedback() async {
-    if (!mounted) return;
-
-    final provider = context.read<ServiceRatingProvider>();
-
-    // Show loading dialog
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(
-        child: Card(
-          child: Padding(
-            padding: EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Syncing feedback...'),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-
-    // Small delay to ensure dialog is fully shown
-    await Future.delayed(const Duration(milliseconds: 100));
-
-    try {
-      final importedCount = await provider.importFeedbackFromFiles();
-      
-      if (!mounted) return;
-      
-      // Close dialog BEFORE calling _loadData which triggers setState
-      Navigator.of(context).pop();
-      
-      // Small delay to ensure dialog close animation completes
-      await Future.delayed(const Duration(milliseconds: 100));
-
-      // Now reload metrics data - this is safe because dialog is already closed
-      await _loadData();
-
-      // Show success message
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(importedCount > 0
-                ? '✅ Imported $importedCount feedback submission${importedCount == 1 ? '' : 's'}'
-                : 'No new feedback to import'),
-            backgroundColor: importedCount > 0 ? Colors.green : Colors.orange,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    } catch (e) {
-      // Close dialog on error
-      if (mounted) Navigator.of(context).pop();
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error syncing feedback: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-          ),
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -155,12 +84,6 @@ class _PerformanceOverviewScreenState extends State<PerformanceOverviewScreen> {
         title: const Text('Performance Overview'),
         backgroundColor: Theme.of(context).colorScheme.surface,
         foregroundColor: Theme.of(context).colorScheme.onSurface,
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _syncFeedback,
-        icon: const Icon(Icons.sync),
-        label: const Text('Sync Feedback'),
-        tooltip: 'Import feedback from web submissions',
       ),
       body: Stack(
         children: [
