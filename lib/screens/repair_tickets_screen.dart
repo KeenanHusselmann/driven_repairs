@@ -1586,6 +1586,93 @@ class TicketDetailsDialog extends StatelessWidget {
                         child: const Text('Close'),
                       ),
                       const SizedBox(width: 8),
+                      // Show Complete button only if ticket is not completed
+                      if (ticket.status != RepairStatus.completed) ...[
+                        FilledButton.icon(
+                          onPressed: () async {
+                            // Show confirmation dialog
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (dialogContext) => AlertDialog(
+                                title: const Text('Complete Ticket'),
+                                content: Text(
+                                  'Mark ticket "${ticket.title}" as completed?',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.of(dialogContext).pop(false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  FilledButton(
+                                    onPressed: () => Navigator.of(dialogContext).pop(true),
+                                    child: const Text('Complete'),
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if (confirm == true && context.mounted) {
+                              // Update ticket status to completed
+                              final now = DateTime.now();
+                              final completedTicket = ticket.copyWith(
+                                status: RepairStatus.completed,
+                                actualCompletion: now,
+                                updatedAt: now,
+                              );
+
+                              final success = await context
+                                  .read<RepairTicketProvider>()
+                                  .updateTicket(completedTicket);
+
+                              if (success && context.mounted) {
+                                // Close the details dialog
+                                Navigator.of(context).pop();
+                                
+                                // Show success message
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Row(
+                                      children: [
+                                        const Icon(Icons.check_circle, color: Colors.white),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            'Ticket "${ticket.title}" marked as completed!',
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    backgroundColor: Colors.green,
+                                    duration: const Duration(seconds: 3),
+                                  ),
+                                );
+
+                                // Show feedback link dialog
+                                await _showFeedbackLinkDialogFromDetails(
+                                  context,
+                                  completedTicket,
+                                  customerProvider,
+                                  deviceProvider,
+                                  technicianProvider,
+                                );
+                              } else if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Failed to complete ticket'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                          icon: const Icon(Icons.check_circle),
+                          label: const Text('Complete'),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: Colors.green,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
                       FilledButton.icon(
                         onPressed: () {
                           Navigator.of(context).pop();
@@ -1668,6 +1755,200 @@ class TicketDetailsDialog extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  Future<void> _showFeedbackLinkDialogFromDetails(
+    BuildContext context,
+    RepairTicket ticket,
+    CustomerProvider customerProvider,
+    DeviceProvider deviceProvider,
+    TechnicianProvider technicianProvider,
+  ) async {
+    // Get customer information
+    final customer = customerProvider.customers.firstWhere(
+      (c) => c.id == ticket.customerId,
+      orElse: () => Customer(
+        id: '',
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+    );
+
+    if (customer.id.isEmpty) return;
+
+    // Get device information
+    Device? device;
+    try {
+      device = deviceProvider.devices.firstWhere(
+        (d) => d.id == ticket.deviceId,
+      );
+    } catch (e) {
+      device = null;
+    }
+
+    // Get technician name
+    String? technicianName;
+    if (ticket.technicianId != null) {
+      final technician = technicianProvider.technicians.firstWhere(
+        (t) => t.id == ticket.technicianId,
+        orElse: () => Technician(
+          id: '',
+          firstName: '',
+          lastName: '',
+          email: '',
+          phone: '',
+          status: TechnicianStatus.inactive,
+          skills: [],
+          hourlyRate: 0,
+          hireDate: DateTime.now(),
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ),
+      );
+      if (technician.id.isNotEmpty) {
+        technicianName = technician.fullName;
+      }
+    }
+
+    // Build feedback form URL
+    final baseUrl = 'https://lkq8fgjg-8080.eun1.devtunnels.ms/feedback_form.html?';
+    final params = <String, String>{
+      'ticket': ticket.id,
+      'customer': customer.id,
+      'name': customer.fullName,
+      'email': customer.email,
+      'phone': customer.phone,
+      'date': DateFormat('MMMM dd, yyyy').format(ticket.createdAt),
+      'technician': technicianName ?? '',
+      'ticketTitle': ticket.title,
+      'ticketStatus': ticket.status.displayName,
+      'ticketPriority': ticket.priority.displayName,
+      if (device != null) ...{
+        'deviceBrand': device.brand,
+        'deviceModel': device.model,
+        'deviceType': device.type.displayName,
+        if (device.serialNumber != null) 'deviceSerial': device.serialNumber!,
+      },
+    };
+    
+    final fullUrl = baseUrl + params.entries
+        .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
+        .join('&');
+
+    // Create short URL
+    String feedbackUrl = fullUrl;
+    if (context.mounted) {
+      final shortUrlProvider = context.read<ShortUrlProvider>();
+      final shortUrl = await shortUrlProvider.createShortUrl(
+        fullUrl: fullUrl,
+        ticketId: ticket.id,
+        customerId: customer.id,
+        expiresAt: DateTime.now().add(const Duration(days: 90)),
+      );
+
+      if (shortUrl != null) {
+        feedbackUrl = 'https://lkq8fgjg-8080.eun1.devtunnels.ms/s/${shortUrl.shortCode}';
+      }
+    }
+
+    // Show dialog with feedback link
+    if (context.mounted) {
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.link, color: Colors.blue),
+              SizedBox(width: 8),
+              Text('Feedback Link Generated'),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Ticket "${ticket.title}" is completed!',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Send this feedback link to ${customer.fullName}:',
+                  style: const TextStyle(fontSize: 14),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.blue[200]!),
+                  ),
+                  child: SelectableText(
+                    feedbackUrl,
+                    style: TextStyle(fontSize: 12, color: Colors.blue[700]),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue[50],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.lightbulb, size: 20, color: Colors.orange),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Copy this link and send it via email, SMS, or WhatsApp',
+                          style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton.icon(
+              onPressed: () async {
+                await Clipboard.setData(ClipboardData(text: feedbackUrl));
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Row(
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.white),
+                          SizedBox(width: 8),
+                          Text('Link copied to clipboard!'),
+                        ],
+                      ),
+                      backgroundColor: Colors.green,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                  Navigator.of(context).pop();
+                }
+              },
+              icon: const Icon(Icons.copy),
+              label: const Text('Copy Link'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   Color _getStatusColor(RepairStatus status) {
