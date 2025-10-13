@@ -6,28 +6,88 @@ import 'package:shelf_router/shelf_router.dart';
 import 'package:shelf_static/shelf_static.dart';
 import 'package:uuid/uuid.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'lib/models/models.dart';
-import 'lib/services/database_service.dart';
-import 'lib/models/short_url.dart';
+import 'package:path/path.dart';
 
-void main() async {
-  print('Starting Driven Repairs Feedback Server...');
+// Simple ServiceRating class without Flutter dependencies
+class ServiceRating {
+  final String id;
+  final String ticketId;
+  final String customerId;
+  final int satisfactionRating;
+  final int timelinessRating;
+  final int communicationRating;
+  final int qualityRating;
+  final String? feedback;
+  final bool wouldRecommend;
+  final DateTime createdAt;
+
+  ServiceRating({
+    required this.id,
+    required this.ticketId,
+    required this.customerId,
+    required this.satisfactionRating,
+    required this.timelinessRating,
+    required this.communicationRating,
+    required this.qualityRating,
+    this.feedback,
+    required this.wouldRecommend,
+    required this.createdAt,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'ticketId': ticketId,
+      'customerId': customerId,
+      'satisfactionRating': satisfactionRating,
+      'timelinessRating': timelinessRating,
+      'communicationRating': communicationRating,
+      'qualityRating': qualityRating,
+      'feedback': feedback,
+      'wouldRecommend': wouldRecommend ? 1 : 0,
+      'createdAt': createdAt.millisecondsSinceEpoch,
+    };
+  }
+
+  double get averageRating =>
+      (satisfactionRating + timelinessRating + communicationRating + qualityRating) / 4;
+}
+
+// Global database instance
+Database? _database;
+
+Future<Database> getDatabase() async {
+  if (_database != null) return _database!;
   
   // Initialize sqflite for desktop
   sqfliteFfiInit();
   databaseFactory = databaseFactoryFfi;
   
+  // Get database path
+  final appDataPath = Platform.environment['LOCALAPPDATA'] ??
+      Platform.environment['APPDATA'] ??
+      Directory.current.path;
+  final databasesPath = join(appDataPath, 'driven_repairs', 'databases');
+  final path = join(databasesPath, 'driven_repairs.db');
+  
+  print('Database path: $path');
+  
+  _database = await openDatabase(path);
+  return _database!;
+}
+
+void main() async {
+  print('Starting Driven Repairs Feedback Server...');
+  
   // Initialize database
-  final dbService = DatabaseService();
-  await dbService.database;
+  await getDatabase();
+  print('Database initialized');
   
   // Create feedback storage directory if it doesn't exist
   final feedbackDir = Directory('feedback_storage');
   if (!await feedbackDir.exists()) {
     await feedbackDir.create();
   }
-  
-  print('Database initialized');
 
   final router = Router();
 
@@ -124,8 +184,7 @@ void main() async {
   // Short URL redirect endpoint
   router.get('/s/<shortCode>', (Request request, String shortCode) async {
     try {
-      final dbService = DatabaseService();
-      final db = await dbService.database;
+      final db = await getDatabase();
       
       // Get the short URL from database
       final result = await db.query(
@@ -136,16 +195,21 @@ void main() async {
       );
 
       if (result.isEmpty) {
+        print('⚠️ Short URL not found: $shortCode');
         return Response.notFound(
           '<html><body><h1>404 - Link Not Found</h1><p>This short link does not exist or has expired.</p></body></html>',
           headers: {'Content-Type': 'text/html'},
         );
       }
 
-      final shortUrl = ShortUrl.fromMap(result.first);
+      final shortUrlData = result.first;
+      final fullUrl = shortUrlData['fullUrl'] as String;
+      final expiresAt = shortUrlData['expiresAt'] as int?;
+      final clickCount = shortUrlData['clickCount'] as int;
 
       // Check if expired
-      if (shortUrl.expiresAt != null && shortUrl.expiresAt!.isBefore(DateTime.now())) {
+      if (expiresAt != null && DateTime.fromMillisecondsSinceEpoch(expiresAt).isBefore(DateTime.now())) {
+        print('⚠️ Short URL expired: $shortCode');
         return Response.notFound(
           '<html><body><h1>Link Expired</h1><p>This link has expired.</p></body></html>',
           headers: {'Content-Type': 'text/html'},
@@ -155,15 +219,15 @@ void main() async {
       // Increment click count
       await db.update(
         'short_urls',
-        {'clickCount': shortUrl.clickCount + 1},
-        where: 'id = ?',
-        whereArgs: [shortUrl.id],
+        {'clickCount': clickCount + 1},
+        where: 'shortCode = ?',
+        whereArgs: [shortCode],
       );
 
-      print('Redirecting ${shortCode} to ${shortUrl.fullUrl} (click #${shortUrl.clickCount + 1})');
+      print('✅ Redirecting $shortCode to $fullUrl (click #${clickCount + 1})');
 
       // Redirect to the full URL
-      return Response.movedPermanently(shortUrl.fullUrl);
+      return Response.movedPermanently(fullUrl);
     } catch (e) {
       print('Error handling short URL redirect: $e');
       return Response.internalServerError(
