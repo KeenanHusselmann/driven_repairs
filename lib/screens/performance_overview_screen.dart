@@ -105,32 +105,38 @@ class _PerformanceOverviewScreenState extends State<PerformanceOverviewScreen> {
       final importedCount = await context.read<ServiceRatingProvider>().importFeedbackFromFiles();
       
       if (!mounted) return;
-      Navigator.of(context).pop(); // Close loading dialog
 
       // Reload metrics data
       await _loadData();
 
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(importedCount > 0
-              ? '✅ Imported $importedCount feedback submission${importedCount == 1 ? '' : 's'}'
-              : 'No new feedback to import'),
-          backgroundColor: importedCount > 0 ? Colors.green : Colors.orange,
-          duration: const Duration(seconds: 3),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      Navigator.of(context).pop(); // Close loading dialog
+      // Close loading dialog after all operations complete
+      if (mounted) Navigator.of(context).pop();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error syncing feedback: $e'),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 4),
-        ),
-      );
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(importedCount > 0
+                ? '✅ Imported $importedCount feedback submission${importedCount == 1 ? '' : 's'}'
+                : 'No new feedback to import'),
+            backgroundColor: importedCount > 0 ? Colors.green : Colors.orange,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading dialog on error
+      if (mounted) Navigator.of(context).pop();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error syncing feedback: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
     }
   }
 
@@ -995,19 +1001,17 @@ class _PerformanceOverviewScreenState extends State<PerformanceOverviewScreen> {
       }
     }
 
-    final subject = Uri.encodeComponent('Share Your Experience with Driven Repairs');
-    final body = Uri.encodeComponent('''Hi ${customer.firstName},
-
-Thank you for choosing Driven Repairs${ticket != null ? ' for service: ${ticket.title}' : ''}!
-
-We value your feedback and would appreciate if you could take 2-3 minutes to share your experience.
-
-Please click the feedback link below:
-[PASTE LINK HERE]
-
-${ticket != null && device != null ? 'Service: ${ticket.title}\nDevice: ${device.brand} ${device.model}\n\n' : ''}Thank you!
-Driven Repairs Team
-keenan.husselmann39@gmail.com''');
+    final subject = Uri.encodeComponent('🔧 Share Your Experience with Driven Repairs');
+    
+    // Create a simple body that works with Windows mailto limitations
+    final bodyText = 'Hi ${customer.firstName},\n\n'
+        'Thank you for choosing Driven Repairs!\n\n'
+        'Please share your feedback by clicking the link below:\n'
+        '[PASTE LINK HERE]\n\n'
+        'Thank you,\n'
+        'Driven Repairs Team';
+    
+    final body = Uri.encodeComponent(bodyText);
 
     // Show dialog with copyable feedback link
     if (mounted) {
@@ -1161,8 +1165,16 @@ keenan.husselmann39@gmail.com''');
 
   Future<void> _launchEmail(String emailUrl, Customer customer) async {
     try {
-      // On Windows, we use the Process to launch the mailto URL
-      await Process.run('cmd', ['/c', 'start', '', emailUrl]);
+      // On Windows, use PowerShell Start-Process for better mailto URL handling
+      final result = await Process.run(
+        'powershell',
+        ['-Command', 'Start-Process', '"$emailUrl"'],
+        runInShell: true,
+      );
+
+      if (result.exitCode != 0) {
+        throw Exception('Failed to open email client: ${result.stderr}');
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
