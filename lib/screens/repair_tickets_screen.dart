@@ -324,13 +324,29 @@ class _RepairTicketsScreenState extends State<RepairTicketsScreen> {
                     Row(
                       children: [
                         Icon(
+                          Icons.person_outline,
+                          size: 14,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Created by ${_getCreatorName(ticket.createdBy)}',
+                          style: TextStyle(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Icon(
                           Icons.schedule,
                           size: 14,
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          'Created ${DateFormat('MMM dd, yyyy').format(ticket.createdAt)}',
+                          DateFormat('MMM dd, yyyy').format(ticket.createdAt),
                           style: TextStyle(
                             color: Theme.of(
                               context,
@@ -453,6 +469,20 @@ class _RepairTicketsScreenState extends State<RepairTicketsScreen> {
         ),
       ),
     );
+  }
+
+  String _getCreatorName(String? createdBy) {
+    if (createdBy == null) return 'Unknown';
+    
+    // Try to get user from auth provider's current user first
+    final authProvider = context.read<AuthProvider>();
+    if (authProvider.currentUser?.id == createdBy) {
+      return authProvider.currentUser!.fullName;
+    }
+    
+    // If not current user, return ID (in a real app, you'd fetch from a UserProvider)
+    // For now, just show the username/ID
+    return 'User ${createdBy.substring(0, 8)}'; // Show first 8 chars of ID
   }
 
   void _showAddTicketDialog() {
@@ -997,6 +1027,7 @@ class _TicketFormDialogState extends State<TicketFormDialog> {
       customerId: _selectedCustomerId ?? widget.ticket?.customerId ?? '',
       deviceId: _selectedDeviceId ?? widget.ticket?.deviceId ?? '',
       technicianId: widget.ticket?.technicianId ?? currentUserId, // Auto-populate with current user
+      createdBy: widget.ticket?.createdBy ?? currentUserId, // Track who created the ticket
       title: _titleController.text.trim(),
       description: _descriptionController.text.trim(),
       status: _status,

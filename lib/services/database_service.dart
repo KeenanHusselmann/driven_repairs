@@ -50,7 +50,7 @@ class DatabaseService {
 
       final db = await openDatabase(
         path,
-        version: 4,
+        version: 5,
         onCreate: _createTables,
         onUpgrade: _onUpgrade,
       );
@@ -148,6 +148,7 @@ class DatabaseService {
         customerId TEXT NOT NULL,
         deviceId TEXT NOT NULL,
         technicianId TEXT,
+        createdBy TEXT,
         title TEXT NOT NULL,
         description TEXT NOT NULL,
         status TEXT NOT NULL,
@@ -164,7 +165,8 @@ class DatabaseService {
         updatedAt INTEGER NOT NULL,
         FOREIGN KEY (customerId) REFERENCES customers (id),
         FOREIGN KEY (deviceId) REFERENCES devices (id),
-        FOREIGN KEY (technicianId) REFERENCES technicians (id)
+        FOREIGN KEY (technicianId) REFERENCES technicians (id),
+        FOREIGN KEY (createdBy) REFERENCES users (id)
       )
     ''');
 
@@ -513,6 +515,17 @@ class DatabaseService {
       );
 
       debugPrint('Short URLs table created successfully');
+    }
+
+    if (oldVersion < 5) {
+      // Add createdBy column to repair_tickets table for version 5
+      debugPrint('Upgrading database to version 5: Adding createdBy to repair_tickets');
+
+      await db.execute('''
+        ALTER TABLE repair_tickets ADD COLUMN createdBy TEXT
+      ''');
+
+      debugPrint('createdBy column added to repair_tickets successfully');
     }
 
     debugPrint('Database upgrade completed successfully');

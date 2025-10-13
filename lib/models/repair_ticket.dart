@@ -62,6 +62,7 @@ class RepairTicket {
   final String customerId;
   final String deviceId;
   final String? technicianId;
+  final String? createdBy; // User ID who created the ticket
   final String title;
   final String description;
   final RepairStatus status;
@@ -82,6 +83,7 @@ class RepairTicket {
     required this.customerId,
     required this.deviceId,
     this.technicianId,
+    this.createdBy,
     required this.title,
     required this.description,
     required this.status,
@@ -116,6 +118,7 @@ class RepairTicket {
       'customerId': customerId,
       'deviceId': deviceId,
       'technicianId': technicianId,
+      'createdBy': createdBy,
       'title': title,
       'description': description,
       'status': status.name,
@@ -139,6 +142,7 @@ class RepairTicket {
       customerId: map['customerId'] ?? '',
       deviceId: map['deviceId'] ?? '',
       technicianId: map['technicianId'],
+      createdBy: map['createdBy'],
       title: map['title'] ?? '',
       description: map['description'] ?? '',
       status: RepairStatus.values.firstWhere(
@@ -173,6 +177,7 @@ class RepairTicket {
     String? customerId,
     String? deviceId,
     String? technicianId,
+    String? createdBy,
     String? title,
     String? description,
     RepairStatus? status,
@@ -193,6 +198,7 @@ class RepairTicket {
       customerId: customerId ?? this.customerId,
       deviceId: deviceId ?? this.deviceId,
       technicianId: technicianId ?? this.technicianId,
+      createdBy: createdBy ?? this.createdBy,
       title: title ?? this.title,
       description: description ?? this.description,
       status: status ?? this.status,
