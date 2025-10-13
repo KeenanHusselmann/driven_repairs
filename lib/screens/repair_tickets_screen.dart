@@ -1310,7 +1310,7 @@ class _TicketFormDialogState extends State<TicketFormDialog> {
       id: widget.ticket?.id ?? '',
       customerId: _selectedCustomerId ?? widget.ticket?.customerId ?? '',
       deviceId: _selectedDeviceId ?? widget.ticket?.deviceId ?? '',
-      technicianId: widget.ticket?.technicianId ?? currentUserId, // Auto-populate with current user
+      technicianId: _selectedTechnicianId ?? widget.ticket?.technicianId ?? currentUserId, // Use selected technician or auto-assign
       createdBy: widget.ticket?.createdBy ?? currentUserId, // Track who created the ticket
       title: _titleController.text.trim(),
       description: _descriptionController.text.trim(),
