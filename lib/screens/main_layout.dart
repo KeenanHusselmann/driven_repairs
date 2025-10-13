@@ -307,35 +307,54 @@ class MainLayout extends StatelessWidget {
 
     int index = 2;
     if (authProvider.canAccessFeature('customers') &&
-        location.startsWith('/customers'))
+        location.startsWith('/customers')) {
       return index;
-    if (authProvider.canAccessFeature('customers')) index++;
+    }
+    if (authProvider.canAccessFeature('customers')) {
+      index++;
+    }
 
     if (authProvider.canAccessFeature('devices') &&
-        location.startsWith('/devices'))
+        location.startsWith('/devices')) {
       return index;
-    if (authProvider.canAccessFeature('devices')) index++;
+    }
+    if (authProvider.canAccessFeature('devices')) {
+      index++;
+    }
 
     if (authProvider.canAccessFeature('tickets') &&
-        location.startsWith('/tickets'))
+        location.startsWith('/tickets')) {
       return index;
-    if (authProvider.canAccessFeature('tickets')) index++;
+    }
+    if (authProvider.canAccessFeature('tickets')) {
+      index++;
+    }
 
-    if (authProvider.canAccessFeature('parts') && location.startsWith('/parts'))
+    if (authProvider.canAccessFeature('parts') && location.startsWith('/parts')) {
       return index;
-    if (authProvider.canAccessFeature('parts')) index++;
+    }
+    if (authProvider.canAccessFeature('parts')) {
+      index++;
+    }
 
-    if (authProvider.canAccessFeature('users') && location.startsWith('/users'))
+    if (authProvider.canAccessFeature('users') && location.startsWith('/users')) {
       return index;
-    if (authProvider.canAccessFeature('users')) index++;
+    }
+    if (authProvider.canAccessFeature('users')) {
+      index++;
+    }
 
-    if (authProvider.canViewSales() && location.startsWith('/sales'))
+    if (authProvider.canViewSales() && location.startsWith('/sales')) {
       return index;
-    if (authProvider.canViewSales()) index++;
+    }
+    if (authProvider.canViewSales()) {
+      index++;
+    }
 
     if (authProvider.canAccessFeature('reports') &&
-        location.startsWith('/reports'))
+        location.startsWith('/reports')) {
       return index;
+    }
 
     return 0;
   }

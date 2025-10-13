@@ -1853,44 +1853,48 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             ticket.actualCompletion?.difference(ticket.createdAt).inDays ?? 0;
         switch (ticket.priority) {
           case Priority.urgent:
-            if (daysTaken <= 1)
+            if (daysTaken <= 1) {
               excellent++;
-            else if (daysTaken <= 2)
+            } else if (daysTaken <= 2) {
               good++;
-            else if (daysTaken <= 3)
+            } else if (daysTaken <= 3) {
               fair++;
-            else
+            } else {
               poor++;
+            }
             break;
           case Priority.high:
-            if (daysTaken <= 2)
+            if (daysTaken <= 2) {
               excellent++;
-            else if (daysTaken <= 4)
+            } else if (daysTaken <= 4) {
               good++;
-            else if (daysTaken <= 7)
+            } else if (daysTaken <= 7) {
               fair++;
-            else
+            } else {
               poor++;
+            }
             break;
           case Priority.medium:
-            if (daysTaken <= 5)
+            if (daysTaken <= 5) {
               excellent++;
-            else if (daysTaken <= 10)
+            } else if (daysTaken <= 10) {
               good++;
-            else if (daysTaken <= 14)
+            } else if (daysTaken <= 14) {
               fair++;
-            else
+            } else {
               poor++;
+            }
             break;
           case Priority.low:
-            if (daysTaken <= 10)
+            if (daysTaken <= 10) {
               excellent++;
-            else if (daysTaken <= 20)
+            } else if (daysTaken <= 20) {
               good++;
-            else if (daysTaken <= 30)
+            } else if (daysTaken <= 30) {
               fair++;
-            else
+            } else {
               poor++;
+            }
             break;
         }
       }

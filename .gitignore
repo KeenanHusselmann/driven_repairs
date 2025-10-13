@@ -43,3 +43,27 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Database files
+*.db
+*.sqlite
+*.db-shm
+*.db-wal
+
+# Feedback storage (exclude imported feedback)
+feedback_storage/imported/
+
+# Documentation (archived markdown files)
+GIT_SETUP_COMPLETE.md
+TESTING_URL_SHORTENING.md
+URL_SHORTENING_COMPARISON.md
+URL_SHORTENING_SYSTEM.md
+GIT_WORKFLOW_OPTIONS.md
+REVIEW_READINESS.md
+
+# Environment and configuration
+.env
+.env.local
+
+# Generated files
+*.g.dart.temp
