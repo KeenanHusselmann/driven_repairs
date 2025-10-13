@@ -2242,7 +2242,7 @@ class _FullActivityLogDialogState extends State<FullActivityLogDialog> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: _filterUser,
+                    initialValue: _filterUser,
                     decoration: const InputDecoration(
                       labelText: 'User',
                       border: OutlineInputBorder(),
