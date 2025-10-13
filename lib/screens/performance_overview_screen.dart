@@ -1001,14 +1001,30 @@ Hi ${customer.firstName},
 
 Thank you for choosing Driven Repairs${ticket != null ? ' for your recent service (Ticket #${ticket.id.substring(0, 8)})' : ''}!
 
-We value your feedback! A feedback link has been provided separately.
+We hope you're satisfied with our service. Your feedback is incredibly valuable to us and helps us improve our services for all our customers.
+
+Please take a few moments to share your experience by clicking the link below:
+
+👉 [PASTE FEEDBACK LINK HERE]
+
+The feedback form should only take 2-3 minutes to complete, and your honest input helps us serve you better.
+
+${ticket != null ? '''
+Service Details:
+• Service: ${ticket.title}
+• Status: ${ticket.status.displayName}
+${device != null ? '• Device: ${device.brand} ${device.model}' : ''}
+''' : ''}
+Thank you for your time and for choosing Driven Repairs!
 
 Best regards,
 Driven Repairs Team
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📧 keenan.husselmann39@gmail.com
+📞 Contact us anytime
 🔧 Your Partner in Quality Repairs
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ''');
 
     // Show dialog with copyable feedback link
