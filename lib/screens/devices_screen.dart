@@ -94,7 +94,7 @@ class _DevicesScreenState extends State<DevicesScreen> {
                           child: Consumer<CustomerProvider>(
                             builder: (context, customerProvider, _) {
                               return DropdownButtonFormField<String?>(
-                                value: _selectedCustomerFilter,
+                                initialValue: _selectedCustomerFilter,
                                 decoration: const InputDecoration(
                                   labelText: 'Customer',
                                   border: OutlineInputBorder(),
