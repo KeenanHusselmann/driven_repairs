@@ -1027,7 +1027,7 @@ class _TicketFormDialogState extends State<TicketFormDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         DropdownButtonFormField<String>(
-                          value: _selectedTechnicianId,
+                          initialValue: _selectedTechnicianId,
                           decoration: const InputDecoration(
                             labelText: 'Assign to Technician',
                             border: OutlineInputBorder(),
