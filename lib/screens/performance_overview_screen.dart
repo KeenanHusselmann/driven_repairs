@@ -80,6 +80,11 @@ class _PerformanceOverviewScreenState extends State<PerformanceOverviewScreen> {
   Future<void> _syncFeedback() async {
     if (!mounted) return;
 
+    // Capture the navigator before async operations
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final provider = context.read<ServiceRatingProvider>();
+
     // Show loading dialog
     showDialog(
       context: context,
@@ -102,7 +107,7 @@ class _PerformanceOverviewScreenState extends State<PerformanceOverviewScreen> {
     );
 
     try {
-      final importedCount = await context.read<ServiceRatingProvider>().importFeedbackFromFiles();
+      final importedCount = await provider.importFeedbackFromFiles();
       
       if (!mounted) return;
 
@@ -110,11 +115,11 @@ class _PerformanceOverviewScreenState extends State<PerformanceOverviewScreen> {
       await _loadData();
 
       // Close loading dialog after all operations complete
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) navigator.pop();
 
       // Show success message
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           SnackBar(
             content: Text(importedCount > 0
                 ? '✅ Imported $importedCount feedback submission${importedCount == 1 ? '' : 's'}'
@@ -126,10 +131,10 @@ class _PerformanceOverviewScreenState extends State<PerformanceOverviewScreen> {
       }
     } catch (e) {
       // Close loading dialog on error
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) navigator.pop();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           SnackBar(
             content: Text('Error syncing feedback: $e'),
             backgroundColor: Colors.red,
