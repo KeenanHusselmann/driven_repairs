@@ -995,37 +995,19 @@ class _PerformanceOverviewScreenState extends State<PerformanceOverviewScreen> {
       }
     }
 
-    final subject = Uri.encodeComponent('🔧 Share Your Experience with Driven Repairs');
-    final body = Uri.encodeComponent('''
-Hi ${customer.firstName},
+    final subject = Uri.encodeComponent('Share Your Experience with Driven Repairs');
+    final body = Uri.encodeComponent('''Hi ${customer.firstName},
 
-Thank you for choosing Driven Repairs${ticket != null ? ' for your recent service (Ticket #${ticket.id.substring(0, 8)})' : ''}!
+Thank you for choosing Driven Repairs${ticket != null ? ' for service: ${ticket.title}' : ''}!
 
-We hope you're satisfied with our service. Your feedback is incredibly valuable to us and helps us improve our services for all our customers.
+We value your feedback and would appreciate if you could take 2-3 minutes to share your experience.
 
-Please take a few moments to share your experience by clicking the link below:
+Please click the feedback link below:
+[PASTE LINK HERE]
 
-👉 [PASTE FEEDBACK LINK HERE]
-
-The feedback form should only take 2-3 minutes to complete, and your honest input helps us serve you better.
-
-${ticket != null ? '''
-Service Details:
-• Service: ${ticket.title}
-• Status: ${ticket.status.displayName}
-${device != null ? '• Device: ${device.brand} ${device.model}' : ''}
-''' : ''}
-Thank you for your time and for choosing Driven Repairs!
-
-Best regards,
+${ticket != null && device != null ? 'Service: ${ticket.title}\nDevice: ${device.brand} ${device.model}\n\n' : ''}Thank you!
 Driven Repairs Team
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📧 keenan.husselmann39@gmail.com
-📞 Contact us anytime
-🔧 Your Partner in Quality Repairs
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-''');
+keenan.husselmann39@gmail.com''');
 
     // Show dialog with copyable feedback link
     if (mounted) {
