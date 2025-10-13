@@ -1144,7 +1144,7 @@ class TicketDetailsDialog extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Ticket #${ticket.id.substring(0, 8)}',
+                              'Ticket #${ticket.id}',
                               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                 color: Theme.of(context).colorScheme.onPrimaryContainer,
                                 fontWeight: FontWeight.bold,
