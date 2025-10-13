@@ -1,20 +1,64 @@
-import 'package:uuid/uuid.dart';
+import 'package:intl/intl.dart';
 import '../models/models.dart';
 import 'database_service.dart';
 
 class RepairTicketRepository {
   final DatabaseService _db = DatabaseService();
-  final Uuid _uuid = const Uuid();
 
   static const String _tableName = 'repair_tickets';
 
+  /// Generate ticket number in format: NA-DDMMYY###
+  /// Example: NA-121025001
+  Future<String> _generateTicketNumber(DateTime createdAt) async {
+    // Format: NA-DDMMYY
+    final dateFormat = DateFormat('ddMMyy');
+    final datePrefix = 'NA-${dateFormat.format(createdAt)}';
+    
+    // Find all tickets created on the same day
+    final startOfDay = DateTime(createdAt.year, createdAt.month, createdAt.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+    
+    final existingTickets = await _db.select(
+      _tableName,
+      where: 'id LIKE ? AND createdAt >= ? AND createdAt < ?',
+      whereArgs: [
+        '$datePrefix%',
+        startOfDay.millisecondsSinceEpoch,
+        endOfDay.millisecondsSinceEpoch,
+      ],
+    );
+    
+    // Get the next sequence number
+    int maxSequence = 0;
+    for (var ticket in existingTickets) {
+      final id = ticket['id'] as String;
+      if (id.length >= 12) { // NA-DDMMYY### = 12 characters minimum
+        final sequencePart = id.substring(9); // Get the ### part
+        final sequence = int.tryParse(sequencePart) ?? 0;
+        if (sequence > maxSequence) {
+          maxSequence = sequence;
+        }
+      }
+    }
+    
+    // Increment and format with leading zeros (3 digits)
+    final nextSequence = (maxSequence + 1).toString().padLeft(3, '0');
+    
+    return '$datePrefix$nextSequence';
+  }
+
   Future<String> create(RepairTicket ticket) async {
-    final id = ticket.id.isEmpty ? _uuid.v4() : ticket.id;
     final now = DateTime.now();
+    final createdAt = ticket.createdAt == ticket.updatedAt ? now : ticket.createdAt;
+    
+    // Generate ticket number if ID is empty or is a UUID
+    final id = ticket.id.isEmpty || ticket.id.contains('-') 
+        ? await _generateTicketNumber(createdAt)
+        : ticket.id;
 
     final ticketWithId = ticket.copyWith(
       id: id,
-      createdAt: ticket.createdAt == ticket.updatedAt ? now : ticket.createdAt,
+      createdAt: createdAt,
       updatedAt: now,
     );
 
