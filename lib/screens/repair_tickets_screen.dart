@@ -1077,7 +1077,7 @@ class _TicketFormDialogState extends State<TicketFormDialog> {
                     const SizedBox(width: 16),
                     Expanded(
                       child: DropdownButtonFormField<Priority>(
-                        value: _priority,
+                        initialValue: _priority,
                         decoration: const InputDecoration(
                           labelText: 'Priority',
                           border: OutlineInputBorder(),
