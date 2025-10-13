@@ -104,7 +104,7 @@ class _TechniciansScreenState extends State<TechniciansScreen> {
                       children: [
                         Expanded(
                           child: DropdownButtonFormField<String>(
-                            value: _selectedSkill,
+                            initialValue: _selectedSkill,
                             decoration: const InputDecoration(
                               labelText: 'Skill Filter',
                               border: OutlineInputBorder(),
