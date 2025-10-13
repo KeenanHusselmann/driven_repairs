@@ -771,7 +771,7 @@ class _PerformanceOverviewScreenState extends State<PerformanceOverviewScreen> {
                                       child: Padding(
                                         padding: const EdgeInsets.symmetric(horizontal: 12),
                                         child: Text(
-                                          'Ticket #${ticket.id.substring(0, 8)} - ${ticket.title}',
+                                          'Ticket #${ticket.id} - ${ticket.title}',
                                           style: const TextStyle(fontSize: 14),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
