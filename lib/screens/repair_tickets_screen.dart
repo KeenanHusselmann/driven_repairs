@@ -865,7 +865,7 @@ class _TicketFormDialogState extends State<TicketFormDialog> {
     _selectedDeviceId = ticket?.deviceId;
     _selectedTechnicianId = ticket?.technicianId;
     
-    // Load devices after the widget is built
+    // Load devices and technicians after the widget is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_selectedCustomerId != null) {
         // If editing, load devices for the selected customer
@@ -874,6 +874,8 @@ class _TicketFormDialogState extends State<TicketFormDialog> {
         // If creating new, load all devices
         context.read<DeviceProvider>().loadDevices();
       }
+      // Load technicians for admin users
+      context.read<TechnicianProvider>().loadTechnicians();
     });
   }
 

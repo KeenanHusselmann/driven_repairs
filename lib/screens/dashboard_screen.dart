@@ -288,7 +288,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   children: activeTickets.map((ticket) {
                     return ListTile(
                       leading: _getStatusIcon(ticket.status),
-                      title: Text(ticket.title),
+                      title: Row(
+                        children: [
+                          Text(
+                            'Ticket #${ticket.id}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              ticket.title,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                       subtitle: Text(
                         'Priority: ${ticket.priority.displayName}',
                       ),
@@ -302,7 +320,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                             )
                           : null,
-                      onTap: () => context.go('/tickets/${ticket.id}'),
+                      onTap: () => _showTicketDetails(context, ticket.id),
                     );
                   }).toList(),
                 );
@@ -311,6 +329,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  void _showTicketDetails(BuildContext context, String ticketId) {
+    showDialog(
+      context: context,
+      builder: (context) => TicketDetailsDialog(ticketId: ticketId),
     );
   }
 
