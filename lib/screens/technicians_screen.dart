@@ -594,7 +594,7 @@ class _TechnicianDialogState extends State<TechnicianDialog> {
                   children: [
                     Expanded(
                       child: DropdownButtonFormField<TechnicianStatus>(
-                        value: _selectedStatus,
+                        initialValue: _selectedStatus,
                         decoration: const InputDecoration(
                           labelText: 'Status',
                           border: OutlineInputBorder(),
