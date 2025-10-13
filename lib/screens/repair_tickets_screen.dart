@@ -239,6 +239,15 @@ class _RepairTicketsScreenState extends State<RepairTicketsScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
+                                'Ticket #${ticket.id}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 12,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
                                 ticket.title,
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w600,
