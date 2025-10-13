@@ -152,7 +152,7 @@ class _DevicesScreenState extends State<DevicesScreen> {
                         const SizedBox(width: 16),
                         Expanded(
                           child: DropdownButtonFormField<String>(
-                            value: _selectedWarrantyStatus,
+                            initialValue: _selectedWarrantyStatus,
                             decoration: const InputDecoration(
                               labelText: 'Warranty Status',
                               border: OutlineInputBorder(),
