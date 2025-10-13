@@ -962,7 +962,7 @@ class _TicketFormDialogState extends State<TicketFormDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         DropdownButtonFormField<String>(
-                          value: _selectedDeviceId,
+                          initialValue: _selectedDeviceId,
                           decoration: InputDecoration(
                             labelText: 'Device*',
                             border: const OutlineInputBorder(),
