@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../models/models.dart';
@@ -549,6 +550,11 @@ class _RepairTicketsScreenState extends State<RepairTicketsScreen> {
               .updateTicket(updatedTicket);
           if (success && mounted) {
             Navigator.of(context).pop();
+            
+            // Check if ticket was just marked as completed
+            final wasCompleted = ticket.status != RepairStatus.completed && 
+                                updatedTicket.status == RepairStatus.completed;
+            
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
@@ -557,6 +563,11 @@ class _RepairTicketsScreenState extends State<RepairTicketsScreen> {
                 backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
               ),
             );
+            
+            // Show feedback link dialog if ticket was just completed
+            if (wasCompleted) {
+              _showFeedbackLinkDialog(updatedTicket);
+            }
           } else if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -568,6 +579,207 @@ class _RepairTicketsScreenState extends State<RepairTicketsScreen> {
         },
       ),
     );
+  }
+
+  Future<void> _showFeedbackLinkDialog(RepairTicket ticket) async {
+    // Get customer information
+    final customerProvider = context.read<CustomerProvider>();
+    final customer = customerProvider.customers.firstWhere(
+      (c) => c.id == ticket.customerId,
+      orElse: () => Customer(
+        id: '',
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+    );
+
+    if (customer.id.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Customer not found for this ticket'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Get device information
+    final deviceProvider = context.read<DeviceProvider>();
+    Device? device;
+    try {
+      device = deviceProvider.devices.firstWhere(
+        (d) => d.id == ticket.deviceId,
+      );
+    } catch (e) {
+      device = null;
+    }
+
+    // Get technician name
+    String? technicianName;
+    if (ticket.technicianId != null) {
+      final techProvider = context.read<TechnicianProvider>();
+      final technician = techProvider.technicians.firstWhere(
+        (t) => t.id == ticket.technicianId,
+        orElse: () => Technician(
+          id: '',
+          firstName: '',
+          lastName: '',
+          email: '',
+          phone: '',
+          status: TechnicianStatus.inactive,
+          skills: [],
+          hourlyRate: 0,
+          hireDate: DateTime.now(),
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ),
+      );
+      if (technician.id.isNotEmpty) {
+        technicianName = technician.fullName;
+      }
+    }
+
+    // Build feedback form URL
+    final baseUrl = 'https://lkq8fgjg-8080.eun1.devtunnels.ms/feedback_form.html?';
+    final params = <String, String>{
+      'ticket': ticket.id,
+      'customer': customer.id,
+      'name': customer.fullName,
+      'email': customer.email,
+      'phone': customer.phone,
+      'date': DateFormat('MMMM dd, yyyy').format(ticket.createdAt),
+      'technician': technicianName ?? '',
+      'ticketTitle': ticket.title,
+      'ticketStatus': ticket.status.displayName,
+      'ticketPriority': ticket.priority.displayName,
+      if (device != null) ...{
+        'deviceBrand': device.brand,
+        'deviceModel': device.model,
+        'deviceType': device.type.displayName,
+        if (device.serialNumber != null) 'deviceSerial': device.serialNumber!,
+      },
+    };
+    
+    final fullUrl = baseUrl + params.entries
+        .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
+        .join('&');
+
+    // Create short URL
+    String feedbackUrl = fullUrl;
+    if (mounted) {
+      final shortUrlProvider = context.read<ShortUrlProvider>();
+      final shortUrl = await shortUrlProvider.createShortUrl(
+        fullUrl: fullUrl,
+        ticketId: ticket.id,
+        customerId: customer.id,
+        expiresAt: DateTime.now().add(const Duration(days: 90)),
+      );
+
+      if (shortUrl != null) {
+        feedbackUrl = 'https://lkq8fgjg-8080.eun1.devtunnels.ms/s/${shortUrl.shortCode}';
+      }
+    }
+
+    // Show dialog with feedback link
+    if (mounted) {
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.link, color: Colors.blue),
+              SizedBox(width: 8),
+              Text('Feedback Link Generated'),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Ticket "${ticket.title}" is completed!',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Send this feedback link to ${customer.fullName}:',
+                  style: const TextStyle(fontSize: 14),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.blue[200]!),
+                  ),
+                  child: SelectableText(
+                    feedbackUrl,
+                    style: TextStyle(fontSize: 12, color: Colors.blue[700]),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue[50],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.lightbulb, size: 20, color: Colors.orange),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Copy this link and send it via email, SMS, or WhatsApp',
+                          style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton.icon(
+              onPressed: () async {
+                await Clipboard.setData(ClipboardData(text: feedbackUrl));
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Row(
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.white),
+                          SizedBox(width: 8),
+                          Text('Link copied to clipboard!'),
+                        ],
+                      ),
+                      backgroundColor: Colors.green,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                  Navigator.of(context).pop();
+                }
+              },
+              icon: const Icon(Icons.copy),
+              label: const Text('Copy Link'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   void _showDeleteTicketConfirmation(RepairTicket ticket) {
