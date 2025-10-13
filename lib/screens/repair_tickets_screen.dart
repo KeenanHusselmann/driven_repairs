@@ -925,7 +925,7 @@ class _TicketFormDialogState extends State<TicketFormDialog> {
                   builder: (context, customerProvider, _) {
                     final customers = customerProvider.customers;
                     return DropdownButtonFormField<String>(
-                      value: _selectedCustomerId,
+                      initialValue: _selectedCustomerId,
                       decoration: const InputDecoration(
                         labelText: 'Customer*',
                         border: OutlineInputBorder(),
