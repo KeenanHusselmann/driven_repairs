@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/providers.dart';
@@ -80,9 +81,6 @@ class _PerformanceOverviewScreenState extends State<PerformanceOverviewScreen> {
   Future<void> _syncFeedback() async {
     if (!mounted) return;
 
-    // Capture the navigator before async operations
-    final navigator = Navigator.of(context);
-    final messenger = ScaffoldMessenger.of(context);
     final provider = context.read<ServiceRatingProvider>();
 
     // Show loading dialog
@@ -114,33 +112,41 @@ class _PerformanceOverviewScreenState extends State<PerformanceOverviewScreen> {
       // Reload metrics data
       await _loadData();
 
-      // Close loading dialog after all operations complete
-      if (mounted) navigator.pop();
-
-      // Show success message
+      // Use addPostFrameCallback to close dialog after rebuild completes
       if (mounted) {
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text(importedCount > 0
-                ? '✅ Imported $importedCount feedback submission${importedCount == 1 ? '' : 's'}'
-                : 'No new feedback to import'),
-            backgroundColor: importedCount > 0 ? Colors.green : Colors.orange,
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            Navigator.of(context).pop();
+            
+            // Show success message
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(importedCount > 0
+                    ? '✅ Imported $importedCount feedback submission${importedCount == 1 ? '' : 's'}'
+                    : 'No new feedback to import'),
+                backgroundColor: importedCount > 0 ? Colors.green : Colors.orange,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+        });
       }
     } catch (e) {
-      // Close loading dialog on error
-      if (mounted) navigator.pop();
-
+      // Use addPostFrameCallback for error case too
       if (mounted) {
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text('Error syncing feedback: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-          ),
-        );
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            Navigator.of(context).pop();
+            
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error syncing feedback: $e'),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 4),
+              ),
+            );
+          }
+        });
       }
     }
   }
