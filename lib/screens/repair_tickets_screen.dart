@@ -1060,7 +1060,7 @@ class _TicketFormDialogState extends State<TicketFormDialog> {
                   children: [
                     Expanded(
                       child: DropdownButtonFormField<RepairStatus>(
-                        value: _status,
+                        initialValue: _status,
                         decoration: const InputDecoration(
                           labelText: 'Status',
                           border: OutlineInputBorder(),
