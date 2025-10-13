@@ -323,22 +323,24 @@ class _RepairTicketsScreenState extends State<RepairTicketsScreen> {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        Icon(
-                          Icons.person_outline,
-                          size: 14,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Created by ${_getCreatorName(ticket.createdBy)}',
-                          style: TextStyle(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurfaceVariant,
-                            fontSize: 12,
+                        if (ticket.createdBy != null) ...[
+                          Icon(
+                            Icons.person_outline,
+                            size: 14,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
-                        ),
-                        const SizedBox(width: 16),
+                          const SizedBox(width: 4),
+                          Text(
+                            _getCreatorName(ticket.createdBy),
+                            style: TextStyle(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                        ],
                         Icon(
                           Icons.schedule,
                           size: 14,
@@ -1063,8 +1065,8 @@ class TicketDetailsDialog extends StatelessWidget {
       child: Container(
         width: 600,
         constraints: const BoxConstraints(maxHeight: 700),
-        child: Consumer4<RepairTicketProvider, CustomerProvider, DeviceProvider, TechnicianProvider>(
-          builder: (context, ticketProvider, customerProvider, deviceProvider, technicianProvider, _) {
+        child: Consumer5<RepairTicketProvider, CustomerProvider, DeviceProvider, TechnicianProvider, AuthProvider>(
+          builder: (context, ticketProvider, customerProvider, deviceProvider, technicianProvider, authProvider, _) {
             final ticket = ticketProvider.tickets
                 .where((t) => t.id == ticketId)
                 .firstOrNull;
@@ -1096,10 +1098,12 @@ class TicketDetailsDialog extends StatelessWidget {
                 .where((t) => t.id == ticket.technicianId)
                 .firstOrNull;
 
-            // Find who created the ticket
-            final creator = technicianProvider.technicians
-                .where((t) => t.id == ticket.technicianId)
-                .firstOrNull;
+            // Find who created the ticket - check if it's the current user
+            final creatorName = ticket.createdBy != null
+                ? (authProvider.currentUser?.id == ticket.createdBy
+                    ? authProvider.currentUser!.fullName
+                    : 'User ${ticket.createdBy!.substring(0, 8)}')
+                : 'Unknown';
 
             return Column(
               mainAxisSize: MainAxisSize.min,
@@ -1232,10 +1236,10 @@ class TicketDetailsDialog extends StatelessWidget {
                           ),
                         const SizedBox(height: 16),
                         // Created By
-                        if (creator != null)
+                        if (ticket.createdBy != null)
                           _buildInfoSection(
                             'Created By',
-                            '${creator.fullName}\nCreated: ${DateFormat('MMM dd, yyyy HH:mm').format(ticket.createdAt)}',
+                            creatorName,
                             Icons.person_add,
                           ),
                         const SizedBox(height: 16),
