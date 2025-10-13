@@ -1056,18 +1056,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   double _calculateAverageRepairTime(List<RepairTicket> tickets) {
     final completedTickets = tickets
-        .where(
-          (ticket) =>
-              ticket.status == RepairStatus.completed &&
-              ticket.actualCompletion != null,
-        )
+        .where((ticket) => ticket.status == RepairStatus.completed)
         .toList();
 
     if (completedTickets.isEmpty) return 0;
 
     final totalHours = completedTickets.fold<double>(0, (sum, ticket) {
-      final duration = ticket.actualCompletion!.difference(ticket.createdAt);
-      return sum + duration.inHours;
+      // Use actualCompletion if available, otherwise fall back to updatedAt
+      final completionTime = ticket.actualCompletion ?? ticket.updatedAt;
+      final duration = completionTime.difference(ticket.createdAt);
+      
+      // Convert to hours with decimal precision
+      final hours = duration.inMinutes / 60.0;
+      return sum + hours;
     });
 
     return totalHours / completedTickets.length;
