@@ -675,7 +675,7 @@ class _DeviceDialogState extends State<DeviceDialog> {
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<DeviceType>(
-                  value: _selectedDeviceType,
+                  initialValue: _selectedDeviceType,
                   decoration: const InputDecoration(
                     labelText: 'Device Type *',
                     border: OutlineInputBorder(),
