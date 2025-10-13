@@ -845,6 +845,7 @@ class _TicketFormDialogState extends State<TicketFormDialog> {
   DateTime? _estimatedCompletion;
   String? _selectedCustomerId;
   String? _selectedDeviceId;
+  String? _selectedTechnicianId;
 
   @override
   void initState() {
@@ -862,6 +863,7 @@ class _TicketFormDialogState extends State<TicketFormDialog> {
     _estimatedCompletion = ticket?.estimatedCompletion;
     _selectedCustomerId = ticket?.customerId;
     _selectedDeviceId = ticket?.deviceId;
+    _selectedTechnicianId = ticket?.technicianId;
     
     // Load devices after the widget is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
