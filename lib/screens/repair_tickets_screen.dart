@@ -1308,6 +1308,11 @@ class _TicketFormDialogState extends State<TicketFormDialog> {
     // Get current user ID from AuthProvider
     final currentUserId = context.read<AuthProvider>().currentUser?.id;
     
+    // Check if status changed to completed
+    final wasCompleted = widget.ticket?.status == RepairStatus.completed;
+    final isNowCompleted = _status == RepairStatus.completed;
+    final shouldSetActualCompletion = !wasCompleted && isNowCompleted;
+    
     final ticket = RepairTicket(
       id: widget.ticket?.id ?? '',
       customerId: _selectedCustomerId ?? widget.ticket?.customerId ?? '',
@@ -1322,6 +1327,9 @@ class _TicketFormDialogState extends State<TicketFormDialog> {
           ? double.tryParse(_estimatedCostController.text.trim())
           : null,
       estimatedCompletion: _estimatedCompletion,
+      actualCompletion: shouldSetActualCompletion 
+          ? now 
+          : widget.ticket?.actualCompletion, // Set completion time when status changes to completed
       createdAt: widget.ticket?.createdAt ?? now,
       updatedAt: now,
     );

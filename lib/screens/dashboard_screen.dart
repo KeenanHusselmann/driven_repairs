@@ -210,13 +210,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     .where(
                       (ticket) =>
                           ticket.status == RepairStatus.completed &&
-                          ticket.actualCompletion != null &&
-                          _isToday(ticket.actualCompletion!),
+                          (ticket.actualCompletion != null 
+                              ? _isToday(ticket.actualCompletion!)
+                              : _isToday(ticket.updatedAt)), // Fallback to updatedAt
                     )
                     .length
                     .toString(),
                 color: Theme.of(context).colorScheme.primary,
-                trend: '+12%',
+                trend: _calculateCompletedTrend(ticketProvider.tickets),
                 subtitle: 'vs yesterday',
               ),
             ),
@@ -226,7 +227,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 title: 'Revenue Today',
                 value: '\$${_calculateTodayRevenue(ticketProvider.tickets)}',
                 color: Theme.of(context).colorScheme.primary,
-                trend: '+8%',
+                trend: _calculateRevenueTrend(ticketProvider.tickets),
                 subtitle: 'vs yesterday',
               ),
             ),
@@ -235,9 +236,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: _buildEnhancedKPICard(
                 title: 'Avg. Repair Time',
                 value:
-                    '${_calculateAverageRepairTime(ticketProvider.tickets)}h',
+                    '${_calculateAverageRepairTime(ticketProvider.tickets).toStringAsFixed(1)}h',
                 color: Theme.of(context).colorScheme.primary,
-                trend: '-15%',
+                trend: _calculateRepairTimeTrend(ticketProvider.tickets),
                 subtitle: 'improvement',
               ),
             ),
@@ -949,25 +950,108 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   // Helper methods for calculations
   String _calculateTrend(List<RepairTicket> tickets, String type) {
-    // Simple mock trend calculation - you can implement real logic
+    // Calculate real trends by comparing today vs yesterday
+    final now = DateTime.now();
+    
     switch (type) {
       case 'active':
-        return '+5%';
+        final todayActive = tickets.where((t) => t.status.isActive).length;
+        final yesterdayActive = tickets.where((t) {
+          return t.status.isActive && 
+                 t.createdAt.isBefore(DateTime(now.year, now.month, now.day));
+        }).length;
+        return _formatTrend(todayActive, yesterdayActive);
       default:
         return '+0%';
     }
+  }
+
+  String _calculateCompletedTrend(List<RepairTicket> tickets) {
+    final todayCompleted = tickets.where((ticket) =>
+        ticket.status == RepairStatus.completed &&
+        (ticket.actualCompletion != null 
+            ? _isToday(ticket.actualCompletion!)
+            : _isToday(ticket.updatedAt))).length;
+    
+    final yesterdayCompleted = tickets.where((ticket) =>
+        ticket.status == RepairStatus.completed &&
+        (ticket.actualCompletion != null 
+            ? _isYesterday(ticket.actualCompletion!)
+            : _isYesterday(ticket.updatedAt))).length;
+    
+    return _formatTrend(todayCompleted, yesterdayCompleted);
+  }
+
+  String _calculateRevenueTrend(List<RepairTicket> tickets) {
+    final todayRevenue = _getTodayRevenue(tickets);
+    final yesterdayRevenue = _getYesterdayRevenue(tickets);
+    return _formatTrend(todayRevenue.toInt(), yesterdayRevenue.toInt());
+  }
+
+  String _calculateRepairTimeTrend(List<RepairTicket> tickets) {
+    final avgTime = _calculateAverageRepairTime(tickets);
+    // Compare with baseline or target (e.g., 24 hours)
+    final baseline = 24.0;
+    final improvement = ((baseline - avgTime) / baseline * 100).toInt();
+    return improvement > 0 ? '-$improvement%' : '+${improvement.abs()}%';
+  }
+
+  String _formatTrend(int today, int yesterday) {
+    if (yesterday == 0) return today > 0 ? '+100%' : '+0%';
+    final change = ((today - yesterday) / yesterday * 100).toInt();
+    return change >= 0 ? '+$change%' : '$change%';
+  }
+
+  bool _isYesterday(DateTime date) {
+    final yesterday = DateTime.now().subtract(const Duration(days: 1));
+    return date.year == yesterday.year &&
+        date.month == yesterday.month &&
+        date.day == yesterday.day;
+  }
+
+  double _getTodayRevenue(List<RepairTicket> tickets) {
+    final todayTickets = tickets.where(
+      (ticket) =>
+          ticket.status == RepairStatus.completed &&
+          (ticket.actualCompletion != null 
+              ? _isToday(ticket.actualCompletion!)
+              : _isToday(ticket.updatedAt)),
+    );
+
+    return todayTickets.fold<double>(0, (sum, ticket) {
+      return sum + (ticket.finalCost ?? ticket.estimatedCost ?? 0);
+    });
+  }
+
+  double _getYesterdayRevenue(List<RepairTicket> tickets) {
+    final yesterdayTickets = tickets.where(
+      (ticket) =>
+          ticket.status == RepairStatus.completed &&
+          (ticket.actualCompletion != null 
+              ? _isYesterday(ticket.actualCompletion!)
+              : _isYesterday(ticket.updatedAt)),
+    );
+
+    return yesterdayTickets.fold<double>(0, (sum, ticket) {
+      return sum + (ticket.finalCost ?? ticket.estimatedCost ?? 0);
+    });
   }
 
   String _calculateTodayRevenue(List<RepairTicket> tickets) {
     final todayTickets = tickets.where(
       (ticket) =>
           ticket.status == RepairStatus.completed &&
-          ticket.actualCompletion != null &&
-          _isToday(ticket.actualCompletion!),
+          (ticket.actualCompletion != null 
+              ? _isToday(ticket.actualCompletion!)
+              : _isToday(ticket.updatedAt)), // Fallback to updatedAt if actualCompletion not set
     );
 
-    // Mock calculation - replace with real pricing logic
-    return (todayTickets.length * 150).toString();
+    // Calculate actual revenue from finalCost or estimatedCost
+    final totalRevenue = todayTickets.fold<double>(0, (sum, ticket) {
+      return sum + (ticket.finalCost ?? ticket.estimatedCost ?? 0);
+    });
+    
+    return totalRevenue.toStringAsFixed(0);
   }
 
   double _calculateAverageRepairTime(List<RepairTicket> tickets) {
