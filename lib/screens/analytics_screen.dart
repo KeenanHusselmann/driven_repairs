@@ -2221,7 +2221,7 @@ class _FullActivityLogDialogState extends State<FullActivityLogDialog> {
               children: [
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: _filterType,
+                    initialValue: _filterType,
                     decoration: const InputDecoration(
                       labelText: 'Activity Type',
                       border: OutlineInputBorder(),
